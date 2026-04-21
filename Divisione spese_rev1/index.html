@@ -100,22 +100,25 @@
 
 	.top-row {
 		display: flex;
-		align-items: center;
 		justify-content: center;
-		position: relative;
-		margin-bottom: 10px;
+		align-items: center;
+		margin-bottom: 6px;
 	}
-
+	
 	.top-row h1 {
 		margin: 0;
 		text-align: center;
 		flex: none;
 		width: 100%;
 	}
+		
+	.settings-row {
+		display: flex;
+		justify-content: center;
+		margin-bottom: 14px;
+	}
 	
 	#btnSettings {
-		position: absolute;
-		right: 0;
 		background:#ff9500;
 		color:#000;
 		border:1px solid #ff9500;
@@ -123,9 +126,9 @@
 		font-size:14px;
 		font-weight:600;
 		border-radius:10px;
-		width:auto !important;   /* ← FIX CRITICO */
-		margin-top:0;
+		width:auto !important;   /* ← evita l’allungamento */
 	}
+
 
 
 
@@ -174,8 +177,12 @@
 
 <div class="top-row">
     <h1>Ripartizione Spese Mensili</h1>
+</div>
+
+<div class="settings-row">
     <button id="btnSettings">Impostazioni</button>
 </div>
+
 
 <div class="card">
     <label>Nome</label>
