@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Ripartizione Spese Mensili</title>
+<meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#000000">
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/ripspe192.png">
+
+<style>
+    :root { color-scheme: dark; }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #000;
+        color: #fff;
+        overflow-x: hidden;
+        touch-action: manipulation;
+    }
+
+    h1 {
+        font-size: 26px;
+        font-weight: 700;
+        margin: 0 0 16px;
+        text-align: center;
+    }
+
+    .card {
+        background: #1c1c1e;
+        padding: 18px;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        margin-bottom: 18px;
+    }
+
+    label {
+        font-size: 14px;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+        color: #9a9a9e;
+    }
+
+    input {
+        width: 100%;
+        padding: 11px 12px;
+        border-radius: 12px;
+        border: 1px solid #3a3a3c;
+        font-size: 16px;
+        margin-bottom: 12px;
+        background: #2c2c2e;
+        color: #fff;
+    }
+
+    input::placeholder { color: #6e6e73; }
+
+    /* 🔥 Rimuove gli spinner */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    input[type=number] { -moz-appearance: textfield; }
+
+    button {
+        width: 100%;
+        padding: 13px;
+        border-radius: 14px;
+        border: none;
+        font-size: 17px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 8px;
+    }
+
+    .btn-primary { background: #0a84ff; color: #fff; }
+    .btn-primary:active { background: #0060df; }
+
+    .btn-secondary {
+        background: #2c2c2e;
+        color: #fff;
+        border: 1px solid #3a3a3c;
+    }
+
+    .btn-danger {
+        background: #2c2c2e;
+        color: #ff3b30;
+        border: 1px solid #3a3a3c;
+    }
+
+	.top-row {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		margin-bottom: 10px;
+	}
+
+	.top-row h1 {
+		margin: 0;
+		text-align: center;
+		flex: none;
+		width: 100%;
+	}
+	
+	#btnSettings {
+		position: absolute;
+		right: 0;
+		background:#ff9500;
+		color:#000;
+		border:1px solid #ff9500;
+		padding:6px 14px;
+		font-size:14px;
+		font-weight:600;
+		border-radius:10px;
+		width:auto !important;   /* ← FIX CRITICO */
+		margin-top:0;
+	}
+
+
+
+    #btnSettings:active {
+        background:#cc7a00;
+        border-color:#cc7a00;
+    }
+
+    .result {
+        font-size: 17px;
+        font-weight: 600;
+        text-align: center;
+        padding: 14px;
+        background: #0b2848;
+        border-radius: 14px;
+        margin-top: 10px;
+        color: #d0e4ff;
+    }
+
+    .history-title {
+        font-size: 15px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #9a9a9e;
+    }
+
+    .history-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 220px;
+        overflow-y: auto;
+    }
+
+    .history-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #2c2c2e;
+        font-size: 14px;
+    }
+
+    .history-main { font-weight: 600; }
+    .history-sub { font-size: 13px; color: #9a9a9e; }
+</style>
+</head>
+<body>
+
+<div class="top-row">
+    <h1>Ripartizione Spese Mensili</h1>
+    <button id="btnSettings">Impostazioni</button>
+</div>
+
+<div class="card">
+    <label>Nome</label>
+    <input id="nome1" placeholder="Es. Marco">
+
+    <label>Spesa (€)</label>
+    <input id="spesa1" type="number" step="0.01" inputmode="decimal">
+
+    <label>Nome</label>
+    <input id="nome2" placeholder="Es. Luca">
+
+    <label>Spesa (€)</label>
+    <input id="spesa2" type="number" step="0.01" inputmode="decimal">
+
+    <button class="btn-primary" id="btnCalcola">Calcola</button>
+    <button class="btn-danger" id="btnReset">Azzera tutto</button>
+
+    <div id="risultato" class="result" style="display:none;"></div>
+</div>
+
+<div class="card">
+    <div class="history-title">Storico calcoli</div>
+    <ul id="storico" class="history-list"></ul>
+</div>
+
+<!-- MODALE IMPOSTAZIONI -->
+<div id="settingsModal" style="
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+">
+    <div style="
+        background: #1c1c1e;
+        padding: 20px;
+        border-radius: 18px;
+        width: 85%;
+        max-width: 380px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    ">
+        <h2 style="margin-top:0; text-align:center;">Impostazioni</h2>
+
+        <label>Metodo di divisione</label>
+        <select id="setMetodo" style="
+            width:100%; padding:11px 12px;
+            border-radius:12px; border:1px solid #3a3a3c;
+            font-size:16px; margin-bottom:12px;
+            background:#2c2c2e; color:#fff;
+        ">
+            <option value="50">50% / 50%</option>
+            <option value="custom">Percentuale personalizzata</option>
+        </select>
+
+        <div id="setPercentBox">
+            <label>Percentuale a carico del primo Nome (%)</label>
+            <input id="setPercentuale" type="number" min="0" max="100">
+        </div>
+
+        <label>Nome 1 predefinito</label>
+        <input id="setNome1">
+
+        <label>Nome 2 predefinito</label>
+        <input id="setNome2">
+
+        <button class="btn-primary" id="btnSaveSettings">Salva</button>
+        <button class="btn-secondary" id="btnCloseSettings">Chiudi</button>
+    </div>
+</div>
+
+<script>
+function loadSettings() {
+    const metodo = localStorage.getItem("metodo") || "50";
+    const percent = localStorage.getItem("percentuale") || "50";
+    const nome1 = localStorage.getItem("nome1") || "";
+    const nome2 = localStorage.getItem("nome2") || "";
+
+    document.getElementById("setMetodo").value = metodo;
+    document.getElementById("setPercentuale").value = percent;
+    document.getElementById("setNome1").value = nome1;
+    document.getElementById("setNome2").value = nome2;
+
+    document.getElementById("nome1").value = nome1;
+    document.getElementById("nome2").value = nome2;
+
+    document.getElementById("setPercentBox").style.display =
+        metodo === "custom" ? "block" : "none";
+}
+
+document.getElementById("btnSettings").addEventListener("click", () => {
+    loadSettings();
+    document.getElementById("settingsModal").style.display = "flex";
+});
+
+document.getElementById("btnCloseSettings").addEventListener("click", () => {
+    document.getElementById("settingsModal").style.display = "none";
+});
+
+document.getElementById("setMetodo").addEventListener("change", function () {
+    document.getElementById("setPercentBox").style.display =
+        this.value === "custom" ? "block" : "none";
+});
+
+document.getElementById("btnSaveSettings").addEventListener("click", () => {
+    const metodo = document.getElementById("setMetodo").value;
+    const percent = document.getElementById("setPercentuale").value || "50";
+    const nome1 = document.getElementById("setNome1").value.trim();
+    const nome2 = document.getElementById("setNome2").value.trim();
+
+    localStorage.setItem("metodo", metodo);
+    localStorage.setItem("percentuale", percent);
+    localStorage.setItem("nome1", nome1);
+    localStorage.setItem("nome2", nome2);
+
+    document.getElementById("nome1").value = nome1;
+    document.getElementById("nome2").value = nome2;
+
+    document.getElementById("settingsModal").style.display = "none";
+});
+
+document.getElementById("btnCalcola").addEventListener("click", calcola);
+document.getElementById("btnReset").addEventListener("click", azzeraTutto);
+
+function calcola() {
+    let nome1 = document.getElementById("nome1").value.trim();
+    let nome2 = document.getElementById("nome2").value.trim();
+
+    if (nome1) localStorage.setItem("nome1", nome1);
+    if (nome2) localStorage.setItem("nome2", nome2);
+
+    nome1 = nome1 || localStorage.getItem("nome1") || "Nome 1";
+    nome2 = nome2 || localStorage.getItem("nome2") || "Nome 2";
+
+    const spesa1 = parseFloat(document.getElementById("spesa1").value) || 0;
+    const spesa2 = parseFloat(document.getElementById("spesa2").value) || 0;
+
+    const totale = spesa1 + spesa2;
+
+    if (totale === 0) {
+        mostraRisultato("Inserisci almeno una spesa.");
+        return;
+    }
+
+    const metodo = localStorage.getItem("metodo") || "50";
+    let quota1, quota2;
+
+    if (metodo === "50") {
+        quota1 = totale / 2;
+        quota2 = totale / 2;
+    } else {
+        const perc = parseFloat(localStorage.getItem("percentuale")) || 50;
+        const p = Math.min(Math.max(perc, 0), 100);
+        quota1 = totale * (p / 100);
+        quota2 = totale - quota1;
+    }
+
+    let messaggio;
+
+    if (Math.abs(spesa1 - quota1) < 0.01 && Math.abs(spesa2 - quota2) < 0.01) {
+        messaggio = "Le spese sono già equilibrate.";
+    } else if (spesa1 < quota1) {
+        messaggio = `${nome1} deve dare € ${(quota1 - spesa1).toFixed(2)} a ${nome2}`;
+    } else {
+        messaggio = `${nome2} deve dare € ${(quota2 - spesa2).toFixed(2)} a ${nome1}`;
+    }
+
+    mostraRisultato(messaggio);
+
+    aggiungiStorico({
+        nome1, nome2,
+        spesa1, spesa2,
+        totale, quota1, quota2,
+        messaggio
+    });
+}
+
+function mostraRisultato(testo) {
+    const box = document.getElementById("risultato");
+    box.textContent = testo;
+    box.style.display = "block";
+}
+
+/* 🔥 Storico con quote ripartite */
+function aggiungiStorico(d) {
+    const ul = document.getElementById("storico");
+    const li = document.createElement("li");
+    li.className = "history-item";
+
+    const main = document.createElement("div");
+    main.className = "history-main";
+    main.textContent = d.messaggio;
+
+    const sub = document.createElement("div");
+    sub.className = "history-sub";
+    sub.textContent =
+        `${d.nome1}: € ${d.spesa1.toFixed(2)} (quota: € ${d.quota1.toFixed(2)}) | ` +
+        `${d.nome2}: € ${d.spesa2.toFixed(2)} (quota: € ${d.quota2.toFixed(2)}) | ` +
+        `Totale: € ${d.totale.toFixed(2)}`;
+
+    li.appendChild(main);
+    li.appendChild(sub);
+    ul.prepend(li);
+}
+
+function azzeraTutto() {
+    document.getElementById("spesa1").value = "";
+    document.getElementById("spesa2").value = "";
+    document.getElementById("risultato").style.display = "none";
+    document.getElementById("risultato").textContent = "";
+    document.getElementById("storico").innerHTML = "";
+}
+
+window.addEventListener("load", loadSettings);
+
+// Service worker
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js");
+    });
+}
+</script>
+
+</body>
+</html>
